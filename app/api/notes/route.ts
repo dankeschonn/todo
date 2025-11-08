@@ -1,19 +1,25 @@
-let notes: string[] = []
+import prisma from "@/lib/prisma";
 
 export async function GET() {
-    return Response.json({ notes });
+  try {
+    const res = await prisma.note.findMany();
+    return Response.json({ notes: res });
+  } catch (err) {
+    console.error("Error fetching users", err);
+  }
 }
 
 export async function POST(request: Request) {
-    const { text } = await request.json()
-    let req = request.body
-    if(!text) return new Response("Missing text", { status: 400 })
-    notes.push(text)
-    return Response.json({ success: true, notes })
-}
-
-export async function PUT(request: Request) {
-    const { newNotes } = await request.json()
-    notes = newNotes.slice()
-    return Response.json({ success: true, notes})
+  const { text } = await request.json();
+  if (!text) return new Response("Missing text", { status: 400 });
+  try {
+    const res = await prisma.note.create({
+      data: {
+        text,
+      },
+    });
+    return Response.json({ notes: res });
+  } catch (err) {
+    console.error(err);
+  }
 }

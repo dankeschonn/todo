@@ -3,12 +3,13 @@
 import { useState, ChangeEvent, KeyboardEvent, useEffect } from "react"
 
 interface NoteData {
-  string: string;
+  text: string;
   id: number;
+  date: Date;
 }
 
 export default function () {
-  const [notes, setNotes] = useState<string[]>([])
+  const [notes, setNotes] = useState<NoteData[]>([])
   const [input, setInput] = useState("")
 
   const handleOnKeyDown = async (e: KeyboardEvent) => {
@@ -22,43 +23,28 @@ export default function () {
     setInput(e.target.value)
   }
 
-  const handleDelete = async (index: number) => {
-    const temp = notes.filter((el, i) => index !== i)
-    await deleteNote(index)
-  }
-
   const getInput = () => (
-    <input className="flex-1 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 border p-2 rounded w-full text-black mb-[10px]" placeholder="Add a new task" type="text" onChange={handleInput} onKeyDown={handleOnKeyDown} value={input} />
+    <input className="flex-1 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 border p-2 rounded w-full text-black mb-[10px]" placeholder="Add a new task" type="text" onChange={(e) => handleInput(e)} onKeyDown={handleOnKeyDown} value={input} />
   )
 
   const Note: React.FC<NoteData> = (props: NoteData) => {
     return <li className="flex justify-between items-center bg-white/60 border border-gray-200 rounded-xl p-3 shadow-sm hover:bg-white/80 transition mb-[10px]"
-    ><span className="text-gray-800">{props.string}</span><button className="text-red-500 hover:text-red-700" onClick={() => handleDelete(props.id)}><span>x</span></button></li>
+    ><span className="text-gray-800">{props.text}</span><button className="text-red-500 hover:text-red-700"><span>x</span></button></li>
+  }
+
+  async function getNotes() {
+    fetch("/api/notes", {
+      method: 'GET'
+    })
+      .then(res => res.json())
+      .then(res => {
+        setNotes(res.notes)
+      })
   }
 
   useEffect(() => {
-    fetch("/api/notes")
-      .then(res => res.json())
-      .then(el => setNotes(el.notes))
+    getNotes()
   }, [])
-
-  async function deleteNote(index: number) {
-    let temp = notes.slice().filter((_, i) => index !== i)
-    const res = await fetch('/api/notes', {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ newNotes: temp })
-    })
-
-    if (!res.ok) {
-      const err = await res.text()
-      throw new Error(err)
-    }
-    const newNotes: { success: boolean, notes: string[] } = await res.json()
-    setNotes(newNotes.notes.slice())
-  }
 
   async function addNote() {
     if (!input.trim()) return
@@ -72,9 +58,8 @@ export default function () {
       const err = await res.text()
       throw new Error(err)
     }
-    const newNote = await res.json()
-    setNotes([...newNote.notes.slice()])
     setInput('')
+    await getNotes()
   }
 
   return (
@@ -83,8 +68,8 @@ export default function () {
         <h1 className="text-2xl font-bold mb-4 text-center">Todo List</h1>
         {getInput()}
         <ul>
-          {notes.map((datum, index) => {
-            return <div key={index}><Note string={datum} id={index} /></div>
+          {notes.map(({ id, text, date }) => {
+            return <div key={id}><Note text={text} id={id} date={date} /></div>
           })}
         </ul>
       </div>
