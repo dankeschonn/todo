@@ -23,3 +23,15 @@ export async function POST(request: Request) {
     console.error(err);
   }
 }
+
+export async function DELETE(request: Request) {
+  let id = await request.json();
+  try {
+    const res = await prisma.note.delete({
+      where: id,
+    });
+    return Response.json({ notes: res });
+  } catch (err) {
+    console.error(err);
+  }
+}

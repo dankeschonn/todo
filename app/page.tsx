@@ -29,7 +29,7 @@ export default function () {
 
   const Note: React.FC<NoteData> = (props: NoteData) => {
     return <li className="flex justify-between items-center bg-white/60 border border-gray-200 rounded-xl p-3 shadow-sm hover:bg-white/80 transition mb-[10px]"
-    ><span className="text-gray-800">{props.text}</span><button className="text-red-500 hover:text-red-700"><span>x</span></button></li>
+    ><span className="text-gray-800">{props.text}</span><button className="text-red-500 hover:text-red-700"><span onClick={() => handleDelete(props.id)}>x</span></button></li>
   }
 
   async function getNotes() {
@@ -40,6 +40,23 @@ export default function () {
       .then(res => {
         setNotes(res.notes)
       })
+  }
+
+  async function handleDelete(id: number) {
+    await deleteNote(id)
+  }
+
+  async function deleteNote(id: number) {
+    const res = await fetch(`/api/notes`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id })
+    })
+    if (!res.ok) {
+      const err = await res.text()
+      throw new Error(err)
+    }
+    await getNotes()
   }
 
   useEffect(() => {
