@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, ChangeEvent, KeyboardEvent, useEffect } from "react"
+import { useState, memo, KeyboardEvent, useEffect, useRef } from "react"
 
 interface NoteData {
   text: string;
@@ -11,6 +11,29 @@ interface NoteData {
 export default function () {
   const [notes, setNotes] = useState<NoteData[]>([])
   const [input, setInput] = useState("")
+  const [showEdit, setShowEdit] = useState(false)
+  const [editId, setEditId] = useState<number>()
+  const [editInput, setEditInput] = useState("")
+  const [isEdit, setIsEdit] = useState(false)
+
+  const handleEditClick = (id: number, text: string) => {
+    if (!showEdit) {
+      setEditInput(text)
+    }
+    setShowEdit(!showEdit)
+    setEditId(id)
+    setIsEdit(!isEdit)
+  }
+
+  const handleEditKeyDown = async (e: KeyboardEvent) => {
+    if (e.key === 'Enter' && editId != null) {
+      await editNote(editId, editInput)
+      setEditInput('')
+      setIsEdit(false)
+    } else if (e.key === 'Escape') {
+      setIsEdit(false)
+    }
+  }
 
   const handleOnKeyDown = async (e: KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -19,17 +42,31 @@ export default function () {
     }
   }
 
-  const handleInput = (e: ChangeEvent<HTMLInputElement>) => {
-    setInput(e.target.value)
+
+  const getEditInput = () => {
+    return <input key="editinput" className="flex-1 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 border p-2 rounded w-full text-black mb-[10px]" placeholder={`Edit task`} type="text" value={editInput} onChange={(e) => setEditInput(e.target.value)} onKeyDown={handleEditKeyDown} />
   }
 
-  const getInput = () => (
-    <input className="flex-1 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 border p-2 rounded w-full text-black mb-[10px]" placeholder="Add a new task" type="text" onChange={(e) => handleInput(e)} onKeyDown={handleOnKeyDown} value={input} />
-  )
+  const getInput = () => {
+    return <input key="input" className="flex-1 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 border p-2 rounded w-full text-black mb-[10px]" placeholder={`Add new task`} type="text" value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleOnKeyDown} />
+  }
 
-  const Note: React.FC<NoteData> = (props: NoteData) => {
+  const Note = (props: NoteData) => {
+    const isCurrentEdit = isEdit && props.id === editId
     return <li className="flex justify-between items-center bg-white/60 border border-gray-200 rounded-xl p-3 shadow-sm hover:bg-white/80 transition mb-[10px]"
-    ><span className="text-gray-800">{props.text}</span><button className="text-red-500 hover:text-red-700"><span onClick={() => handleDelete(props.id)}>x</span></button></li>
+    ><span className="text-gray-800">{isCurrentEdit ?
+      getEditInput()
+      : props.text}</span>
+      <span>
+        <button style={{ color: 'black', marginRight: '10px' }} onClick={() => handleEditClick(props.id, props.text)}
+        >
+          {isCurrentEdit ? 'back' : 'edit'}
+        </button>
+        <button className="text-red-500 hover:text-red-700">
+          <span onClick={() => handleDelete(props.id)}>x</span>
+        </button>
+      </span>
+    </li>
   }
 
   async function getNotes() {
@@ -44,6 +81,19 @@ export default function () {
 
   async function handleDelete(id: number) {
     await deleteNote(id)
+  }
+
+  async function editNote(id: number, text: string) {
+    const res = await fetch('/api/notes', {
+      method: "PATCH",
+      headers: { "Content-Type": 'application/json' },
+      body: JSON.stringify({ id, text })
+    })
+    if (!res.ok) {
+      const err = await res.text()
+      throw new Error(err)
+    }
+    await getNotes()
   }
 
   async function deleteNote(id: number) {
@@ -85,8 +135,8 @@ export default function () {
         <h1 className="text-2xl font-bold mb-4 text-center">Todo List</h1>
         {getInput()}
         <ul>
-          {notes.map(({ id, text, date }) => {
-            return <div key={id}><Note text={text} id={id} date={date} /></div>
+          {notes.sort((a, b) => a.id - b.id).map(({ id, text, date }) => {
+            return <div key={id}>{Note({ text: text, id, date })}</div>
           })}
         </ul>
       </div>
