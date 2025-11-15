@@ -24,6 +24,26 @@ export async function POST(request: Request) {
   }
 }
 
+export async function PATCH(request: Request) {
+  const { id, text } = await request.json();
+  console.log(id, text);
+  if (!id || !text) return new Response("Missing data", { status: 400 });
+
+  try {
+    const res = await prisma.note.update({
+      where: {
+        id,
+      },
+      data: {
+        text,
+      },
+    });
+    return Response.json({ notes: res });
+  } catch (err) {
+    return Response.json(err);
+  }
+}
+
 export async function DELETE(request: Request) {
   let id = await request.json();
   try {
