@@ -63,7 +63,7 @@ export default function () {
           {isCurrentEdit ? 'back' : 'edit'}
         </button>
         <button className="text-red-500 hover:text-red-700">
-          <span onClick={() => handleDelete(props.id)}>x</span>
+          <span onClick={() => handleDelete(props.id)}>{isCurrentEdit ? '' : 'x'}</span>
         </button>
       </span>
     </li>
