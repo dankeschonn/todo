@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, memo, KeyboardEvent, useEffect, useRef } from "react"
+import { useState, KeyboardEvent, useEffect, } from "react"
+import Pusher from "pusher-js"
 
 interface NoteData {
   text: string;
@@ -111,6 +112,13 @@ export default function () {
 
   useEffect(() => {
     getNotes()
+    const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
+      cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
+    })
+    const channel = pusher.subscribe("notes-channel")
+    channel.bind("note-event", async (data: { action: string, msg: string }) => {
+      await getNotes()
+    })
   }, [])
 
   async function addNote() {
