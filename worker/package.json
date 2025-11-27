@@ -7,7 +7,15 @@
     "pusher": "^5.2.0"
   },
   "devDependencies": {
-    "@types/amqplib": "^0.10.8"
+    "@types/amqplib": "^0.10.8",
+    "@types/node": "^24.10.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  },
+  "scripts": {
+    "dev": "ts-node index.ts",
+    "build": "npx tsc",
+    "start": "node index.ts"
   },
   "type": "module"
 }
