@@ -5,12 +5,16 @@ type Data = {
   rabbit_preview: string | null;
 };
 
-export default function GET(req: NextApiRequest, res: NextApiResponse) {
-  const envExists = !!process.env.RABBITMQ_URL;
-  return res.status(200).json({
-    rabbit: envExists ? "present" : "missing",
-    rabbit_preview: envExists
-      ? String(process.env.RABBITMQ_URL).slice(0, 10)
-      : null,
-  });
+export async function GET() {
+  try {
+    const envExists = !!process.env.RABBITMQ_URL;
+    return Response.json({
+      rabbit: envExists ? "present" : "missing",
+      rabbit_preview: envExists
+        ? String(process.env.RABBITMQ_URL).slice(0, 10)
+        : null,
+    });
+  } catch (err) {
+    console.error("Error fetching users", err);
+  }
 }
