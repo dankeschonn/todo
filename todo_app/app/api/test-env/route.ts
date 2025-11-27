@@ -8,7 +8,7 @@ type Data = {
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   const envExists = !!process.env.RABBITMQ_URL;
 
-  res.status(200).json({
+  return res.status(200).json({
     rabbit: envExists ? "present" : "missing",
     rabbit_preview: envExists
       ? String(process.env.RABBITMQ_URL).slice(0, 10)
